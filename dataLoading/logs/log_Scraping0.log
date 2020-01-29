@@ -1,0 +1,3 @@
+INFO:root:[0] Connecting to Mongo.
+INFO:root:[0] Connection to Mongo collections established.
+INFO:root:[0] Webdriver loaded
