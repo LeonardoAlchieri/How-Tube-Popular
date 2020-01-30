@@ -1,0 +1,10 @@
+host: case.bounceme.net:80
+database: test
+
+sample_size: 100
+field_names:
+  - title
+  - likes
+  - dislikes
+  - views
+  - date
