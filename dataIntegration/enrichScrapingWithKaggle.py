@@ -6,6 +6,7 @@ import base64
 from sqlalchemy import create_engine
 import pymysql
 from pymongo import UpdateOne
+from pymongo import UpdateMany
 from mpi4py import MPI
 import sys
 import logging
@@ -23,7 +24,7 @@ def main():
 
     ID = comm.Get_rank()
 
-    logging.basicConfig(filename='./logs/log_enrichscraperWithkaggle'+str(ID)+'.log', level=logging.INFO)
+    logging.basicConfig(filename='./logs/log_enrichScraperWithkaggle'+str(ID)+'.log', level=logging.INFO)
     logging.info("\n")
     logging.info("Log file created. Program started.")
     logging.info("Reading config files.")
@@ -45,7 +46,7 @@ def main():
     collectionName = "scrape"
     scraperCollection = databaseMongo[collectionName]
 
-    collectionName = "kaggle"
+    collectionName = "kaggleNation"
     kaggleCollection = databaseMongo[collectionName]
 
     logging.info("Mongo collections loaded.")
@@ -55,10 +56,10 @@ def main():
 
     logging.info("Preparing to update.")
     # This Updated enriches scraper documents with data from kaggle
-    upserts = [ UpdateOne(
+    upserts = [ UpdateMany(
         {'id': kaggleDoc["id"]},
         {
-            '$set': {"category": kaggleDoc["category"]}
+            '$set': {"date": kaggleDoc["date"]}
         }) for kaggleDoc in cursorkaggle]
     logging.info("Updating documents.")
     scraperCollection.bulk_write(upserts)
