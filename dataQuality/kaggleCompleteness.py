@@ -26,7 +26,7 @@ def field_completeness(doc_list, doc_list_length, field_names):
 
     for (key, value) in mean_std_dict.items():
         p = value/doc_list_length
-        mean_std_dict[key] = { 'mean' : p, 'std' : numpy.sqrt(p*(1-p)/doc_list_length)}
+        mean_std_dict[key] = { 'mean' : "{:.4f}".format(p), 'std' : "{:.4f}".format(numpy.sqrt(p*(1-p)/doc_list_length))}
     return mean_std_dict;
 
 def main():
@@ -63,7 +63,10 @@ def main():
         }]
     )
     result = field_completeness(sample_dict, SAMPLE_SIZE,FIELD_NAMES)
-    print(result)
+    with open("kaggleCompletenessResults.txt", "w+") as outfile:
+        json.dump(result, outfile, indent = 4, sort_keys = True)
+    print("Results saved in ./kaggleCompletenessResults.txt")
+    logging.info("Results saved in ./kaggleCompletenessResults.txt")
 
 if __name__ == "__main__":
     main()

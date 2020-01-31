@@ -1,7 +1,7 @@
 host: case.bounceme.net:80
-database: test
+database: testSafe
 
-sample_size: 100
+sample_size: 10000
 field_names:
   - title
   - likes
