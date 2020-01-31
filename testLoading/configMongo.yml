@@ -1,0 +1,3 @@
+host: case.bounceme.net:80
+database: loadingData
+percentage: 25
