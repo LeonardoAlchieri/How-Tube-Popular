@@ -15,6 +15,7 @@ import shutil
 from pprint import pprint
 import yaml
 import time
+import pandas as pd
 
 def clean_ref_date(x):
     year = "20"+x[:2]
@@ -24,7 +25,6 @@ def clean_ref_date(x):
 
 def main():
     START = time.time()
-    prepare_logging()
 
     try:
         LINE_START = sys.argv[1]
@@ -38,6 +38,7 @@ def main():
 
 
     logging.basicConfig(filename='./logs/log_Kaggle'+str(ID)+'.log', level=logging.INFO)
+    logging.info("\n")
 
     # Load MySQL
     PASSWORD = base64.b64decode('Q2FjY2FGcml0dGE2OQ==').decode("utf-8")
@@ -62,14 +63,22 @@ def main():
     collectionMongo.create_index([ ('id', 1), ('ref_date', 1) ])
     clientMongo.admin.command("shardCollection", str(MONGO_DATABASE)+"."+str(collectionName), key={"id":1, "ref_date":1})
     logging.info("["+str(ID)+"] Loading data from SQL.")
+
+
+    count_result = pd.read_sql('''SELECT COUNT(*) FROM '''+str(country_list[ID]),con=connectorSQL, chunksize=2000)
+    for res in count_result:
+        NUMBER_OF_ROWS = int(res["COUNT(*)"][0])
+
+    LIMIT = int(NUMBER_OF_ROWS * LOADING_PERC * 0.01)
+    logging.info("["+str(ID)+"] Limiting to "+str(LIMIT)+" rows out of "+str(NUMBER_OF_ROWS)+".")
     #
     #   Potremmo parallelizzare sui chunk, in cui un primario tiene la memoria
     #   e gli altri prendono da quello.
     #
-    chunksSQL = pd.read_sql('''SELECT TOP '''+str(LOADING_PERC)+''' PERCENT video_id, trending_date, title, channel_title,
+    chunksSQL = pd.read_sql('''SELECT video_id, trending_date, title, channel_title,
                             publish_time, tags, views, likes, dislikes, comment_count, thumbnail_link,
                             comments_disabled, ratings_disabled, video_error_or_removed,
-                            description  FROM '''+str(country_list[ID]),con=connectorSQL, chunksize=2000)
+                            description  FROM '''+str(country_list[ID]+''' LIMIT '''+str(LIMIT)),con=connectorSQL, chunksize=2000)
 
     logging.info("["+str(ID)+"] Data loaded from SQL.")
     count = 0
@@ -103,10 +112,14 @@ def main():
     time_result = {
         "collection": collectionName,
         "percentage": LOADING_PERC,
-        "time": (END - START)
+        "time": (END - START),
+        "number of cores": comm.Get_size()
     }
-    with open("results/"+str(collectionName)+str(LOADING_PERC)+".json", "w") as file:
-        json.dump(time_result, file)
+    df = pd.DataFrame()
+    df = df.append(time_result, ignore_index=True)
+    with open("results/kaggleNation.csv", "a") as file:
+        df.to_csv(file, header=False)
+
 
 if __name__ == "__main__":
     main()
