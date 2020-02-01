@@ -54,13 +54,24 @@ def main():
     upserts = [ UpdateMany(
         {'id':kaggleDoc["id"], 'ref_date': kaggleDoc['ref_date']},
         {
-            '$set': {"comments_disabled": kaggleDoc["comments_disabled"],
-                "video_error_or_removed": kaggleDoc["video_error_or_removed"],
-                "ratings_disabled": kaggleDoc["ratings_disabled"]},
             '$setOnInsert': kaggleDoc,
         }, upsert=True) for kaggleDoc in cursorKaggle]
+
+    upserts2 = [ UpdateMany(
+        {'id':kaggleDoc["id"], 'ref_date': kaggleDoc['ref_date']},
+        {
+            '$set': {"comments_disabled": kaggleDoc["comments_disabled"],
+                "video_error_or_removed": kaggleDoc["video_error_or_removed"],
+                "ratings_disabled": kaggleDoc["ratings_disabled"]}
+        },) for kaggleDoc in cursorKaggle]
+    upserts.extend(upserts2)
+
     logging.info("Updating documents.")
-    scraperCollection.bulk_write(upserts)
+    try:
+        scraperCollection.bulk_write(upserts)
+    except pymongo.errors.BulkWriteError as bwe:
+        print(bwe.details)
+        raise
     logging.info("Data saved succesfully to Mongo.")
 
 
