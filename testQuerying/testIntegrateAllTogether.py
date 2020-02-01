@@ -16,8 +16,10 @@ import shutil
 from apiclient.discovery import build
 from datetime import datetime
 import yaml
+import time
 
 def main():
+    START = time.time()
     comm = MPI.COMM_WORLD
 
     ID = comm.Get_rank()
@@ -56,13 +58,23 @@ def main():
     upserts = [ UpdateMany(
         {'id':kaggleDoc["id"], 'ref_date': kaggleDoc['ref_date']},
         {
-            '$set': {"comments_disabled": kaggleDoc["comments_disabled"],
-                "video_error_or_removed": kaggleDoc["video_error_or_removed"],
-                "ratings_disabled": kaggleDoc["ratings_disabled"]},
             '$setOnInsert': kaggleDoc,
         }, upsert=True) for kaggleDoc in cursorKaggle]
+
+    upserts2 = [ UpdateMany(
+        {'id':kaggleDoc["id"], 'ref_date': kaggleDoc['ref_date']},
+        {
+            '$set': {"comments_disabled": kaggleDoc["comments_disabled"],
+                "video_error_or_removed": kaggleDoc["video_error_or_removed"],
+                "ratings_disabled": kaggleDoc["ratings_disabled"]}
+        },) for kaggleDoc in cursorKaggle]
+    upserts.extend(upserts2)
     logging.info("Updating documents.")
-    scraperCollection.bulk_write(upserts)
+    try:
+        scraperCollection.bulk_write(upserts)
+    except pymongo.errors.BulkWriteError as bwe:
+        print(bwe.details)
+        raise
     logging.info("Data saved succesfully to Mongo.")
 
     logging.info("["+str(ID)+"] Program completed.")
@@ -71,11 +83,11 @@ def main():
         "collection": collectionName,
         "percentage": LOADING_PERC,
         "time": (END - START),
-        "number of cores": 1
+        "number of cores": comm.Get_size()
     }
     df = pd.DataFrame()
     df = df.append(time_result, ignore_index=True)
-    with open("results/kaggleNation.csv", "a") as file:
+    with open("results/resultTogether.csv", "a") as file:
         df.to_csv(file, header=False)
 
 

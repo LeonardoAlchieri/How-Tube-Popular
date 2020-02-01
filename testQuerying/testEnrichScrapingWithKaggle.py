@@ -16,10 +16,12 @@ import shutil
 from apiclient.discovery import build
 from datetime import datetime
 import yaml
+import time
 
 
 
 def main():
+    START = time.time()
     comm = MPI.COMM_WORLD
 
     ID = comm.Get_rank()
@@ -77,7 +79,7 @@ def main():
     }
     df = pd.DataFrame()
     df = df.append(time_result, ignore_index=True)
-    with open("results/kaggleNation.csv", "a") as file:
+    with open("results/resultTogether.csv", "a") as file:
         df.to_csv(file, header=False)
 
 
