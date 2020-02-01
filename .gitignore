@@ -1,1 +1,2 @@
-./dataPreloading/datasetKaggle
+*.json
+*.csv
