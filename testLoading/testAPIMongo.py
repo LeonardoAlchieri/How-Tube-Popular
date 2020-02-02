@@ -51,6 +51,14 @@ def main():
 
     LIMIT = int(NUMBER_OF_ROWS * LOADING_PERC * 0.01)
     logging.info("["+str(ID)+"] Limiting to "+str(LIMIT)+" rows out of "+str(NUMBER_OF_ROWS)+".")
+
+    BATCH_SIZE = round(LIMIT/comm.Get_size() + 0.5)
+    if(ID == 0):
+        APIData = APIData[:BATCH_SIZE]
+    elif(ID == (comm.Get_size()-1)):
+        APIData = APIData[BATCH_SIZE*ID:]
+    else:
+        APIData = APIData[BATCH_SIZE*ID:BATCH_SIZE*(ID+1)]
     #
     #   Potremmo parallelizzare sui chunk, in cui un primario tiene la memoria
     #   e gli altri prendono da quello.
@@ -62,7 +70,7 @@ def main():
             {
                 '$setOnInsert':{"id":x},
                 '$addToSet': {"regionCode": "US"}
-            }, upsert=True) for x in APIData]
+            }, upsert=True) for x in APIData["0"]]
 
     collectionMongo.bulk_write(upserts)
 
