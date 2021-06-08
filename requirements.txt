@@ -5,5 +5,5 @@ apiclient==1.0.4
 PyMySQL==0.9.3
 SQLAlchemy==1.3.13
 scipy==1.4.1
-Pillow==7.0.0
+Pillow==8.2.0
 textblob==0.15.3
